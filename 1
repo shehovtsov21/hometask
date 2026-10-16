@@ -1,0 +1,143 @@
+#include <iostream>
+using namespace std;
+
+class Participant {
+    const char* name;
+    int maxRun;
+    int maxJump;
+
+public:
+    Participant(const char* name, int maxRun, int maxJump)
+        : name(name), maxRun(maxRun), maxJump(maxJump) {}
+
+    virtual ~Participant() {}
+
+    const char* GetName() const { return name; }
+    int GetMaxRun() const { return maxRun; }
+    int GetMaxJump() const { return maxJump; }
+
+    virtual void Run() const = 0;
+    virtual void Jump() const = 0;
+};
+
+class Human : public Participant {
+public:
+    Human(const char* name, int maxRun, int maxJump)
+        : Participant(name, maxRun, maxJump) {}
+
+    void Run() const override {
+        cout << "Людина " << GetName() << " біжить.\n";
+    }
+
+    void Jump() const override {
+        cout << "Людина " << GetName() << " стрибає.\n";
+    }
+};
+
+class Cat : public Participant {
+public:
+    Cat(const char* name, int maxRun, int maxJump)
+        : Participant(name, maxRun, maxJump) {}
+
+    void Run() const override {
+        cout << "Кіт " << GetName() << " біжить.\n";
+    }
+
+    void Jump() const override {
+        cout << "Кіт " << GetName() << " стрибає.\n";
+    }
+};
+
+class Robot : public Participant {
+public:
+    Robot(const char* name, int maxRun, int maxJump)
+        : Participant(name, maxRun, maxJump) {}
+
+    void Run() const override {
+        cout << "Робот " << GetName() << " біжить.\n";
+    }
+
+    void Jump() const override {
+        cout << "Робот " << GetName() << " стрибає.\n";
+    }
+};
+
+class Obstacle {
+    const char* name;
+    int distance;
+
+protected:
+    bool PrintResult(const Participant& participant, int limit) const {
+        cout << "Учасник[" << participant.GetName() << "] ";
+        if (limit >= distance) {
+            cout << "пройшов перешкоду[" << name
+                 << "] на дистанції[" << distance << " м].\n";
+            return true;
+        }
+
+        cout << "не пройшов перешкоду[" << name
+             << "] на дистанції[" << distance
+             << " м]. Пройдено[" << limit << " м].\n";
+        return false;
+    }
+
+public:
+    Obstacle(const char* name, int distance)
+        : name(name), distance(distance) {}
+
+    virtual ~Obstacle() {}
+    virtual bool Overcome(const Participant& participant) const = 0;
+};
+
+class RunningTrack : public Obstacle {
+public:
+    RunningTrack(int length) : Obstacle("Бігова доріжка", length) {}
+
+    bool Overcome(const Participant& participant) const override {
+        participant.Run();
+        return PrintResult(participant, participant.GetMaxRun());
+    }
+};
+
+class Wall : public Obstacle {
+public:
+    Wall(int height) : Obstacle("Стіна", height) {}
+
+    bool Overcome(const Participant& participant) const override {
+        participant.Jump();
+        return PrintResult(participant, participant.GetMaxJump());
+    }
+};
+
+int main() {
+    // Обмеження на біг та стрибки задані в метрах.
+    Human human("Олег", 1000, 2);
+    Cat cat("Мурчик", 500, 3);
+    Robot robot("R2", 2000, 5);
+
+    RunningTrack track1(300);
+    Wall wall1(2);
+    RunningTrack track2(800);
+    Wall wall2(3);
+
+    Participant* participants[] = { &human, &cat, &robot };
+    Obstacle* obstacles[] = { &track1, &wall1, &track2, &wall2 };
+
+    for (Participant* participant : participants) {
+        cout << "\nУчасник: " << participant->GetName() << '\n';
+        bool finished = true;
+
+        for (Obstacle* obstacle : obstacles) {
+            if (!obstacle->Overcome(*participant)) {
+                cout << "Учасник вибуває зі змагання.\n";
+                finished = false;
+                break;
+            }
+        }
+
+        if (finished)
+            cout << "Учасник подолав усі перешкоди!\n";
+    }
+
+    return 0;
+}
